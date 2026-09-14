@@ -2,10 +2,15 @@ name: SonarCloud Analysis
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
+    branches: [main]
     types: [opened, synchronize, reopened]
+
+# The scanner only needs repository and pull-request metadata for analysis.
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
   sonarcloud:
@@ -21,21 +26,19 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: "22"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
-      # - name: Lint
-      #   run: npm run lint --if-present
-
       - name: Run tests with coverage
-        continue-on-error: true
-        run: npx ng test --watch=false --code-coverage --browsers=ChromeHeadlessNoSandbox
+        run: npm run test -- --watch=false --code-coverage --browsers=ChromeHeadlessNoSandbox
+
+      - name: Build application
+        run: npm run build -- --configuration production
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
